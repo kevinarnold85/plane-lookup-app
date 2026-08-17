@@ -23,10 +23,20 @@ def fetch_and_sync():
     response = requests.get(FAA_URL, headers=headers)
     response.raise_for_status()
 
-    print("Extracting MASTER.txt from archive...")
+    print("Extracting MASTER file from archive...")
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-        # Find MASTER.txt file in the zip archive
-        master_file = [f for f in z.namelist() if 'MASTER.txt' in f.upper()][0]
+        # Debug print all filenames inside the ZIP
+        file_list = z.namelist()
+        print(f"Files found in ZIP: {file_list}")
+        
+        # Match any file containing 'MASTER' in its name
+        master_files = [f for f in file_list if 'MASTER' in f.upper()]
+        
+        if not master_files:
+            raise FileNotFoundError(f"Could not find a MASTER file in ZIP. Available files: {file_list}")
+            
+        master_file = master_files[0]
+        print(f"Targeting file: {master_file}")
         
         with z.open(master_file) as f:
             lines = [line.decode('utf-8', errors='ignore') for line in f.readlines()]
